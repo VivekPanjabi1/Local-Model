@@ -1,0 +1,11 @@
+﻿.venv/
+__pycache__/
+data/
+models/
+logs/
+experiments/
+*.ckpt
+*.pt
+*.bin
+*.log
+"*.ipynb_checkpoints/"
