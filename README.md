@@ -1,41 +1,59 @@
-# Local LLM Lab
+# Zvec Semantic Search
 
-Experimental workspace for running and fine-tuning large language models locally on an RTX 4060 + 13th-gen Intel i9 machine. The goal is to explore LoRA/QLoRA adapters, track experiments, and document best practices for consumer-grade hardware.
+Local-first semantic search demo combining WikiText ingestion, sentence-transformer embeddings, and a Zvec vector index.
 
-## Repo Layout
+## Features
+- **Data prep**: Pull WikiText-103, clean lines, and produce refined chunks.
+- **Embeddings**: Batch generation via `all-MiniLM-L6-v2` with L2 normalization.
+- **Indexing**: Local Zvec collection storing chunk text + 384-d vectors.
+- **CLI + UI**: Command-line builder/query plus Streamlit UI (`src/ui_zvec.py`).
 
-| Path | Description |
-| --- | --- |
-| `src/` | Core Python modules (`main.py`, helpers for data prep, training, inference). |
-| `scripts/` | Utility scripts (dataset downloaders, cleanup helpers). |
-| `notebooks/` | Jupyter notebooks for exploration, evaluation, visualization. |
-| `data/raw/` | Unprocessed datasets (keep large files out of git). |
-| `data/processed/` | Cleaned/tokenized data ready for training. |
-| `models/base/` | Base checkpoints or symlinks to HF cache. |
-| `models/finetuned/` | LoRA adapters and merged weights. |
-| `configs/` | JSON/YAML configs describing training/inference runs. |
-| `experiments/` | Logs, metrics, and notes per experiment. |
-| `logs/` | Console logs, TensorBoard traces, or evaluation reports. |
+## Project Layout
+```
+├── scripts/
+│   ├── prepare_wikitext.py   # Download + clean raw dataset
+│   ├── refine_chunks.py      # Secondary filtering + merging
+│   └── data/
+│       ├── sample_docs.txt
+│       └── refined_chunks.txt
+├── src/
+│   ├── ingest.py             # Load + chunk documents
+│   ├── embed.py              # EmbeddingModel wrapper
+│   ├── index_zvec.py         # ZvecIndex build + search
+│   ├── ui_zvec.py            # Streamlit app
+│   └── search.py / zvec_store.py
+├── app.py                    # CLI orchestrator
+└── requirements.txt
+```
 
-## Quick Start
+## Setup
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-1. **Environment**
+## Data Pipeline
+1. **Prepare WikiText**
    ```bash
-   python -m venv .venv
-   .venv\Scripts\activate
-   pip install -r requirements.txt  # create this file when ready
+   python scripts/prepare_wikitext.py
    ```
-2. **Check GPU**
+2. **Refine chunks**
    ```bash
-   nvidia-smi
+   python scripts/refine_chunks.py
    ```
-3. **Run placeholder app**
+3. **Build Zvec index + sample query**
    ```bash
-   python src\main.py
+   python src/index_zvec.py
    ```
 
-## Next Steps
+## Streamlit UI
+```bash
+streamlit run src/ui_zvec.py
+```
+The UI loads the existing Zvec index/embedding model, accepts queries, and displays top results with scores + latency metrics.
 
-1. Add `requirements.txt` (transformers, accelerate, peft, bitsandbytes, datasets, etc.).
-2. Implement data ingestion + LoRA training scripts.
-3. Track each experiment in `experiments/` with metrics + observations.
+## Troubleshooting
+- Ensure `zvec` native library is installed and discoverable.
+- `scripts/data/*.txt` must exist before running the indexer.
+- Re-run `python src/index_zvec.py` after updating dataset to refresh the collection.
